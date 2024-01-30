@@ -1,0 +1,14 @@
+CREATE TABLE users (
+  id BIGSERIAL PRIMARY KEY,
+  timezone TEXT NOT NULL
+);
+
+CREATE TABLE bets (
+  bet_id SERIAL PRIMARY KEY,
+
+  bet_time TIMESTAMP WITH TIME ZONE NOT NULL,
+
+  user_id BIGSERIAL NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users (id),
+  UNIQUE (user_id)
+);
