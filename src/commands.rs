@@ -1,5 +1,8 @@
-use crate::{db::get_timezone, Context, Error};
+use crate::{db::get_timezone, Context, Data, Error};
+use anyhow::Result;
+use chrono::Utc;
 use chrono_tz::Tz;
+use poise::serenity_prelude::{FullEvent, Message};
 
 /// Show this help menu
 #[poise::command(prefix_command, track_edits, slash_command)]
@@ -18,6 +21,33 @@ pub async fn help(
         },
     )
     .await?;
+    Ok(())
+}
+
+pub async fn first(message: &Message, data: &Data) -> Result<()> {
+    let author_id: i64 = message.author.id.get().try_into()?;
+
+    let timezone = match get_timezone(author_id, &data.pool).await? {
+        Some(timezone) => timezone,
+        None => {
+            println!("User does not have timezone");
+
+            return Ok(());
+        }
+    };
+
+    let dt = Utc::now().with_timezone(&timezone);
+
+    sqlx::query!(
+        "INSERT INTO bets (bet_time, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+        dt,
+        author_id
+    )
+    .execute(&data.pool)
+    .await?;
+
+    println!("Registed");
+
     Ok(())
 }
 

@@ -4,14 +4,11 @@ mod commands;
 mod db;
 
 use anyhow::Result;
-use chrono::Utc;
 use dotenvy_macro::dotenv;
 use log::{error, info};
 use poise::serenity_prelude::{self as serenity, FullEvent};
 use sqlx::{PgPool, Pool, Postgres};
 use std::env::var;
-
-use crate::db::get_timezone;
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -59,40 +56,15 @@ async fn main() -> Result<()> {
         event_handler: |_ctx, event, _framework, _data| {
             Box::pin(async move {
                 let message = match event {
-                    FullEvent::Message { new_message } => new_message,
+                    FullEvent::Message { new_message }
+                        if new_message.content.to_lowercase().starts_with("first") =>
+                    {
+                        new_message
+                    }
                     _ => return Ok(()),
                 };
 
-                if !message.content.to_lowercase().starts_with("first") {
-                    return Ok(());
-                }
-
-                let author_id: i64 = message.author.id.get().try_into()?;
-
-                let timezone = match get_timezone(author_id, &_data.pool).await? {
-                    Some(timezone) => timezone,
-                    None => {
-                        println!("User does not have timezone");
-
-                        return Ok(());
-                    }
-                };
-
-                let dt = Utc::now().with_timezone(&timezone);
-
-                sqlx::query!(
-                    "
-                    INSERT INTO bets (bet_time, user_id)
-                    VALUES ($1, $2)
-                    ON CONFLICT DO NOTHING
-                    ",
-                    dt,
-                    author_id
-                )
-                .execute(&_data.pool)
-                .await?;
-
-                println!("Registed");
+                commands::first(message, _data).await?;
 
                 Ok(())
             })
