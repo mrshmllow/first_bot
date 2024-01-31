@@ -9,6 +9,10 @@ edition = "2021"
 name = "daemon"
 path = "src/daemon/main.rs"
 
+[[bin]]
+name = "daily"
+path = "src/daily/main.rs"
+
 [dependencies]
 anyhow = "1.0.79"
 chrono = "0.4.33"
