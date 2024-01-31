@@ -2,15 +2,14 @@
 name = "first_bot"
 version = "0.1.0"
 edition = "2021"
-default-bin = "daemon"
 
 [[bin]]
 name = "daemon"
 path = "src/daemon/main.rs"
 
-[[bin]]
-name = "daily"
-path = "src/daily/main.rs"
+# [[bin]]
+# name = "daily"
+# path = "src/daily/main.rs"
 
 [dependencies]
 anyhow = "1.0.79"
@@ -26,4 +25,8 @@ sqlx = { version = "0.7", features = [
   "postgres",
 ] }
 log = "0.4.20"
-dotenvy_macro = "0.15.7"
+
+shuttle-runtime = "0.37.0"
+shuttle-secrets = "0.37.0"
+shuttle-serenity = "0.37.0"
+shuttle-shared-db = { version = "0.37.0", features = ["sqlx", "postgres"] }

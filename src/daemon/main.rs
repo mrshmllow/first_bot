@@ -3,10 +3,13 @@
 mod commands;
 mod db;
 
+use anyhow::Context as _;
 use anyhow::Result;
-use dotenvy_macro::dotenv;
 use log::{error, info};
 use poise::serenity_prelude::{self as serenity, FullEvent};
+use shuttle_runtime::CustomError;
+use shuttle_secrets::SecretStore;
+use shuttle_serenity::ShuttleSerenity;
 use sqlx::{PgPool, Pool, Postgres};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -32,13 +35,18 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+#[shuttle_runtime::main]
+async fn main(
+    #[shuttle_secrets::Secrets] secret_store: SecretStore,
+    #[shuttle_shared_db::Postgres(local_uri = "postgresql://127.0.0.1:5432/first_bot")]
+    pool: sqlx::PgPool,
+) -> ShuttleSerenity {
     env_logger::init();
 
-    let pool = PgPool::connect(dotenv!("DATABASE_URL")).await?;
-
-    sqlx::migrate!().run(&pool).await?;
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .map_err(CustomError::new)?;
 
     let options = poise::FrameworkOptions {
         commands: vec![
@@ -82,15 +90,17 @@ async fn main() -> Result<()> {
         .options(options)
         .build();
 
-    let token = dotenv!("DISCORD_TOKEN");
+    let token = secret_store
+        .get("DISCORD_TOKEN")
+        .context("DISCORD_TOKEN was not found")?;
+
     let intents =
         serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 
     let client = serenity::ClientBuilder::new(token, intents)
         .framework(framework)
-        .await;
+        .await
+        .map_err(CustomError::new)?;
 
-    client?.start().await?;
-
-    Ok(())
+    Ok(client.into())
 }

@@ -33,7 +33,7 @@
           modules = [
             {
               dotenv.enable = true;
-              packages = with pkgs; [sqlx-cli pkg-config openssl];
+              packages = with pkgs; [sqlx-cli pkg-config openssl cargo-shuttle];
 
               services.postgres = {
                 enable = true;
