@@ -1,5 +1,5 @@
 [package]
-name = "first_bot"
+name = "marshmallow-first-bot"
 version = "0.1.0"
 edition = "2021"
 
