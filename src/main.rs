@@ -83,7 +83,7 @@ async fn main() -> Result<()> {
         .options(options)
         .build();
 
-    let token = var("DISCORD_TOKEN")?;
+    let token = dotenv!("DISCORD_TOKEN")?;
     let intents =
         serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 
