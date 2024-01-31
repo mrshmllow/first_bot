@@ -8,7 +8,6 @@ use dotenvy_macro::dotenv;
 use log::{error, info};
 use poise::serenity_prelude::{self as serenity, FullEvent};
 use sqlx::{PgPool, Pool, Postgres};
-use std::env::var;
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;

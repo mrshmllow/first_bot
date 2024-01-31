@@ -2,7 +2,7 @@ use crate::{db::get_timezone, Context, Data, Error};
 use anyhow::Result;
 use chrono::Utc;
 use chrono_tz::Tz;
-use poise::serenity_prelude::{FullEvent, Message};
+use poise::serenity_prelude::Message;
 
 /// Show this help menu
 #[poise::command(prefix_command, track_edits, slash_command)]
