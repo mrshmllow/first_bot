@@ -2,9 +2,9 @@ use anyhow::Result;
 use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
 use dotenvy_macro::dotenv;
-use log::{error, info};
-use sqlx::{PgPool, Pool, Postgres};
-use std::{collections::HashMap, env::var};
+use poise::serenity_prelude::{self as serenity, CreateMessage, UserId};
+use sqlx::PgPool;
+use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -26,11 +26,11 @@ async fn main() -> Result<()> {
     .fetch_all(&pool)
     .await?;
 
-    let user_bet_map: HashMap<i64, DateTime<Tz>> = query
+    let user_bet_map: HashMap<u64, DateTime<Tz>> = query
         .iter()
         .map(|query| {
             (
-                query.user_id,
+                query.user_id as u64,
                 query.bet_time.with_timezone(
                     &query
                         .timezone
@@ -41,19 +41,33 @@ async fn main() -> Result<()> {
         })
         .collect();
 
-    let winner = user_bet_map.iter().min_by_key(|(id, bet_time)| {
+    let winner = match user_bet_map.iter().min_by_key(|(_, bet_time)| {
         let midnight_local = bet_time.date().and_hms_nano_opt(0, 0, 0, 0).unwrap();
-
         let duration = bet_time.signed_duration_since(midnight_local);
 
-        println!("{}", duration.num_hours());
-
         duration.num_seconds()
-    });
+    }) {
+        Some(winner) => winner,
+        None => return Ok(()),
+    };
 
     println!("{query:?}");
     println!("{user_bet_map:?}");
     println!("{winner:?}");
+
+    let token = dotenv!("DISCORD_TOKEN");
+    let intents =
+        serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
+
+    let client = serenity::ClientBuilder::new(token, intents).await?;
+
+    let user_id = UserId::new(*winner.0);
+    let user = user_id.to_user(&client.http).await?;
+
+    user.dm(client.http, CreateMessage::new().content("You won!"))
+        .await?;
+
+    sqlx::query!("DELETE FROM users").execute(&pool).await?;
 
     Ok(())
 }
