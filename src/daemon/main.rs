@@ -4,13 +4,12 @@ mod commands;
 mod db;
 
 use anyhow::Context as _;
-use anyhow::Result;
 use log::{error, info};
 use poise::serenity_prelude::{self as serenity, FullEvent};
 use shuttle_runtime::CustomError;
 use shuttle_secrets::SecretStore;
 use shuttle_serenity::ShuttleSerenity;
-use sqlx::{PgPool, Pool, Postgres};
+use sqlx::{Pool, Postgres};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -41,8 +40,6 @@ async fn main(
     #[shuttle_shared_db::Postgres(local_uri = "postgresql://127.0.0.1:5432/first_bot")]
     pool: sqlx::PgPool,
 ) -> ShuttleSerenity {
-    env_logger::init();
-
     sqlx::migrate!()
         .run(&pool)
         .await

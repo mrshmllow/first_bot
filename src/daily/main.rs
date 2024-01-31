@@ -8,8 +8,6 @@ use std::collections::HashMap;
 
 #[tokio::main]
 async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> Result<()> {
-    env_logger::init();
-
     let pool = PgPool::connect(dotenv!("DATABASE_URL")).await?;
 
     #[derive(Debug)]
