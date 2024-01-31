@@ -1,0 +1,11 @@
+providers = ["rust"]
+
+[phases.build]
+cmds = [
+  "mkdir -p bin",
+  "cargo build --release --bin daemon",
+  "cp target/release/daemon bin",
+]
+
+[start]
+cmd = "./bin/daemon"
